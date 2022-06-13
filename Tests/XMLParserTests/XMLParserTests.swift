@@ -68,9 +68,9 @@ final class XMLParserTests: XCTestCase {
 
     func testContainerTag() throws {
         let containerTag = "<xmlTag headerContent=\"none\">tagContent</xmlTag>"
-        let result = try containerTagParser.parse(containerTag)
+        let result = try containerTagParser(nil).parse(containerTag)
         XCTAssertNoDifference(result, XML.element("xmlTag", ["headerContent": "none"], [.text("tagContent")]))
-        let printResult = try containerTagParser.print(result)
+        let printResult = try containerTagParser(nil).print(result)
         XCTAssertNoDifference(String(printResult), containerTag)
     }
 
@@ -92,33 +92,33 @@ final class XMLParserTests: XCTestCase {
 
     func testXMLContentText() throws {
         let body = "hoi"
-        let result = try contentParser.parse(body)
+        let result = try contentParser(nil).parse(body)
         XCTAssertNoDifference(result, XML.text("hoi"))
-        let printResult = try contentParser.print(result)
+        let printResult = try contentParser(nil).print(result)
         XCTAssertNoDifference(String(printResult), body)
     }
 
     func testXMLContentComment() throws {
         let body = "<!--hoi-->"
-        let result = try contentParser.parse(body)
+        let result = try contentParser(nil).parse(body)
         XCTAssertNoDifference(result, XML.comment("hoi"))
-        let printResult = try contentParser.print(result)
+        let printResult = try contentParser(nil).print(result)
         XCTAssertNoDifference(String(printResult), body)
     }
 
     func testXMLContentEmptyTag() throws {
         let tag = "<xmlTag header=\"none\"/>"
-        let result = try contentParser.parse(tag)
+        let result = try contentParser(nil).parse(tag)
         XCTAssertNoDifference(result, .element("xmlTag", ["header": "none"], []))
-        let printResult = try contentParser.print(result)
+        let printResult = try contentParser(nil).print(result)
         XCTAssertNoDifference(String(printResult), tag)
     }
 
     func testXMLContentContainerTag() throws {
         let containerTag = "<xmlTag headerContent=\"none\">tagContent</xmlTag>"
-        let result = try contentParser.parse(containerTag)
+        let result = try contentParser(nil).parse(containerTag)
         XCTAssertNoDifference(result, .element("xmlTag", ["headerContent": "none"], [.text("tagContent")]))
-        let printResult = try contentParser.print(result)
+        let printResult = try contentParser(nil).print(result)
         XCTAssertNoDifference(String(printResult), containerTag)
     }
 
@@ -132,41 +132,41 @@ final class XMLParserTests: XCTestCase {
 
     func testXMLDoctype() throws {
         let doctype = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root></root>"
-        let result = try xmlParser.parse(doctype)
+        let result = try xmlParser(false).parse(doctype)
         XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [])])
-        let printResult = try xmlParser.print(result)
+        let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), doctype)
     }
 
     func testXMLEmptyTag() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root><empty/></root>"
-        let result = try xmlParser.parse(xml)
+        let result = try xmlParser(false).parse(xml)
         XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [.element("empty", [:], [])])])
-        let printResult = try xmlParser.print(result)
+        let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
 
     func testXMLContainerTag() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root><nonEmpty>a</nonEmpty></root>"
-        let result = try xmlParser.parse(xml)
+        let result = try xmlParser(false).parse(xml)
         XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [.element("nonEmpty", [:], [.text("a")])])])
-        let printResult = try xmlParser.print(result)
+        let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
 
     func testXMLText() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root>text</root>"
-        let result = try xmlParser.parse(xml)
+        let result = try xmlParser(false).parse(xml)
         XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [.text("text")])])
-        let printResult = try xmlParser.print(result)
+        let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
 
     func testXMLComment() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root><!--comment--></root>"
-        let result = try xmlParser.parse(xml)
+        let result = try xmlParser(false).parse(xml)
         XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [.comment("comment")])])
-        let printResult = try xmlParser.print(result)
+        let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
 
@@ -179,7 +179,7 @@ final class XMLParserTests: XCTestCase {
             </nonEmpty>
         </root>
         """
-        let result = try xmlParser.parse(xml)
+        let result = try xmlParser(false).parse(xml)
         XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [.element("nonEmpty", [:], [.text("text")])])])
     }
 }
@@ -274,32 +274,32 @@ final class XMLExampleTests: XCTestCase {
     ]
     
     func testExample() throws {
-        let result = try xmlParser.parse(indentedXML)
+        let result = try xmlParser(false).parse(indentedXML)
         XCTAssertNoDifference(
             result,
             structuredXML
         )
-        let printResult = try xmlParser.print(result)
+        let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), flatXML)
     }
     
     func testIndentedExample() throws {
-        let result = try indentedXMLParser.parse(indentedXML)
+        let result = try xmlParser(true).parse(indentedXML)
         XCTAssertNoDifference(
             result,
             structuredXML
         )
-        let printResult = try indentedXMLParser.print(result)
+        let printResult = try xmlParser(true).print(result)
         XCTAssertNoDifference(String(printResult), indentedXML)
     }
     
     func testFlatToIndent() throws {
-        let result = try indentedXMLParser.parse(flatXML)
+        let result = try xmlParser(true).parse(flatXML)
         XCTAssertNoDifference(
             result,
             structuredXML
         )
-        let printResult = try indentedXMLParser.print(result)
+        let printResult = try xmlParser(true).print(result)
         XCTAssertNoDifference(String(printResult), indentedXML)
     }
 }

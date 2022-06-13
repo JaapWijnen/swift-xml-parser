@@ -45,13 +45,6 @@ let emptyTagParser = ParsePrint {
     ">".utf8
 }.map(Conversions.TagHeadToXML())
 
-let contentParser: AnyParserPrinter<Substring.UTF8View, XML> = OneOf {
-    containerTagParser
-    emptyTagParser
-    commentParser
-    textParser
-}.eraseToAnyParserPrinter()
-
 let openingTagParser = ParsePrint {
     "<".utf8
     Not { "/".utf8 }
@@ -62,23 +55,6 @@ let openingTagParser = ParsePrint {
     }
     ">".utf8
 }
-
-let containerTagParser = ParsePrint {
-    openingTagParser
-    Whitespace()
-    Many {
-        Lazy {
-            contentParser
-            Whitespace()
-        }
-    } terminator: {
-        "</".utf8
-    }
-    Prefix { $0 != .init(ascii: ">") }.map(.string)
-    ">".utf8
-}
-    .filter { tagHead, _, closingTag in tagHead.0 == closingTag }
-    .map(Conversions.XMLElement())
 
 let commentParser = ParsePrint {
     "<!--".utf8
@@ -101,56 +77,23 @@ let xmlDoctypeParser = ParsePrint {
     "?>".utf8
 }.map(Conversions.XMLDoctype())
 
-let xmlParser = ParsePrint {
-    Optionally {
-        xmlDoctypeParser
-        Whitespace()
-    }
-    containerTagParser
-    End()
-}.map(
-    .convert(
-        apply: { doctype, root in
-            if let doctype {
-                return [doctype, root]
-            } else {
-                return [root]
-            }
-        },
-        unapply: { xml in
-            guard xml.count > 0, xml.count <= 2 else  {
-                return nil
-            }
-            
-            let doctype: XML? = xml.count == 2 ? xml[0] : nil
-            let root: XML = xml[xml.count-1]
-            
-            if let doctype {
-                switch doctype {
-                case .doctype:
-                    break
-                default:
-                    return nil
-                }
-            }
-            
-            switch root {
-            case .element:
-                break
-            default:
-                return nil
-            }
-            
-            return (doctype, root)
+public let xmlParser: (Bool) -> AnyParserPrinter<Substring.UTF8View, [XML]> = { (indenting: Bool) in
+    ParsePrint {
+        Optionally {
+            xmlDoctypeParser
+            Whitespace(.vertical).printing(indenting ? "\n".utf8 : "".utf8)
         }
-    )
-)
+        containerTagParser(indenting ? 0 : nil)
+        End()
+    }.map(Conversions.XMLRoot())
+    .eraseToAnyParserPrinter()
+}
 
-let indentedContentParser: (Int) -> AnyParserPrinter<Substring.UTF8View, XML> = { indentation in
+let contentParser: (Int?) -> AnyParserPrinter<Substring.UTF8View, XML> = { indentation in
     OneOf {
-        indentedContainerTagParser(indentation)
+        containerTagParser(indentation)
         ParsePrint {
-            Whitespace(.horizontal).printing(String(repeating: " ", count: indentation).utf8)
+            Whitespace(.horizontal).printing(String(repeating: " ", count: indentation ?? 0).utf8)
             emptyTagParser
             Whitespace(.horizontal)
         }
@@ -159,18 +102,18 @@ let indentedContentParser: (Int) -> AnyParserPrinter<Substring.UTF8View, XML> = 
     }.eraseToAnyParserPrinter()
 }
 
-let indentedContainerTagParser = { (indentation: Int) in
+let containerTagParser = { (indentation: Int?) in
     ParsePrint {
-        Whitespace(.horizontal).printing(String(repeating: " ", count: indentation).utf8)
+        Whitespace(.horizontal).printing(String(repeating: " ", count: indentation ?? 0).utf8)
         openingTagParser
-        Whitespace(.vertical).printing("\n".utf8)
+        Whitespace(.vertical).printing(indentation != nil ? "\n".utf8 : "".utf8)
         Many {
             Lazy {
-                indentedContentParser(indentation + 4)
-                Whitespace(.vertical).printing("\n".utf8)
+                contentParser(indentation.map { $0 + 4 })
+                Whitespace(.vertical).printing(indentation != nil ? "\n".utf8 : "".utf8)
             }
         } terminator: {
-            Whitespace(.horizontal).printing(String(repeating: " ", count: indentation).utf8)
+            Whitespace(.horizontal).printing(String(repeating: " ", count: indentation ?? 0).utf8)
             "</".utf8
         }
         Prefix { $0 != .init(ascii: ">") }.map(.string)
@@ -179,12 +122,3 @@ let indentedContainerTagParser = { (indentation: Int) in
     .filter { tagHead, _, closingTag in tagHead.0 == closingTag }
     .map(Conversions.XMLElement())
 }
-
-let indentedXMLParser = ParsePrint {
-    Optionally {
-        xmlDoctypeParser
-        Whitespace(.vertical).printing("\n".utf8)
-    }
-    indentedContainerTagParser(0)
-    End()
-}.map(Conversions.XMLRoot())
