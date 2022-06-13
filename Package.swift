@@ -12,7 +12,10 @@ let package = Package(
             targets: ["XMLParser"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/pointfreeco/swift-parsing.git", from: "0.2.0"),
+        .package(path: "~/code/swift/swift-parsing"),
+        //.package(url: "https://github.com/pointfreeco/swift-parsing.git", from: "0.9.2"),
+        .package(url: "https://github.com/apple/swift-collections.git", from: "1.0.2"),
+        .package(url: "https://github.com/pointfreeco/swift-custom-dump.git", from: "0.4.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -21,9 +24,13 @@ let package = Package(
             name: "XMLParser",
             dependencies: [
                 .product(name: "Parsing", package: "swift-parsing"),
+                .product(name: "Collections", package: "swift-collections"),
             ]),
         .testTarget(
             name: "XMLParserTests",
-            dependencies: ["XMLParser"]),
+            dependencies: [
+                "XMLParser",
+                .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]),
     ]
 )

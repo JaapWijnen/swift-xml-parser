@@ -1,173 +1,190 @@
 import Parsing
 
-// MARK: - XML Type
-
-public enum XML {
-    public typealias Parameters = [String: String]
-    
-    case doctype(Parameters)
-    indirect case element(String, Parameters, [XML])
-    case text(String)
-    case comment(String)
+let quotedStringParser = ParsePrint {
+    "\"".utf8
+    PrefixUpTo("\"".utf8).map(.string)
+    "\"".utf8
 }
 
-extension XML: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case let .doctype(parameters):
-            return ".doctype(\(parameters))"
-        case let .element(type, parameters, content):
-            return ".element(\(type), \(parameters), [\(content)])"
-        case let .text(string):
-            return string
-        case let .comment(comment):
-            return "<!--\(comment)-->"
+let attributeParser = ParsePrint {
+    PrefixUpTo("=".utf8).map(.string)
+    "=".utf8
+    quotedStringParser
+}
+
+let attributesParser = Many {
+    attributeParser
+} separator: {
+    Whitespace(1..., .horizontal)
+}.map(Conversions.TuplesToDictionary())
+
+let tagNameParser = ParsePrint {
+    From<Conversions.UTF8ViewToSubstring, Prefix<Substring>>(.substring) {
+        Prefix { $0.isLetter }
+    }.map(.string)
+}
+
+let tagHeadParser = ParsePrint {
+    tagNameParser
+    Optionally {
+        Whitespace(1..., .horizontal)
+        attributesParser
+    }.map(Conversions.OptionalEmptyDictionary())
+    Whitespace(.horizontal)
+}
+
+struct XMLParsingError: Error { }
+
+let emptyTagParser = ParsePrint {
+    "<".utf8
+    Not { "/".utf8 }
+    Prefix(1...) { $0 != .init(ascii: ">") }.pipe {
+        tagHeadParser
+        "/".utf8
+    }
+    ">".utf8
+}.map(Conversions.TagHeadToXML())
+
+let contentParser: AnyParserPrinter<Substring.UTF8View, XML> = OneOf {
+    containerTagParser
+    emptyTagParser
+    commentParser
+    textParser
+}.eraseToAnyParserPrinter()
+
+let openingTagParser = ParsePrint {
+    "<".utf8
+    Not { "/".utf8 }
+    Prefix(1...) { $0 != .init(ascii: ">") }.pipe {
+        tagHeadParser
+        Whitespace(.horizontal)
+        Not { "/".utf8 }
+    }
+    ">".utf8
+}
+
+let containerTagParser = ParsePrint {
+    openingTagParser
+    Whitespace()
+    Many {
+        Lazy {
+            contentParser
+            Whitespace()
         }
+    } terminator: {
+        "</".utf8
     }
+    Prefix { $0 != .init(ascii: ">") }.map(.string)
+    ">".utf8
+}
+    .filter { tagHead, _, closingTag in tagHead.0 == closingTag }
+    .map(Conversions.XMLElement())
+
+let commentParser = ParsePrint {
+    "<!--".utf8
+    PrefixUpTo("-->".utf8).map(.string).map(Conversions.XMLComment())
+    "-->".utf8
 }
 
-extension XML: Equatable {
-    public static func == (lhs: XML, rhs: XML) -> Bool {
-        switch (lhs, rhs) {
-        case
-            let (.doctype(lhsAttributes), .doctype(rhsAttributes)):
-            return lhsAttributes == rhsAttributes
-        case
-            let (.comment(lhs), .comment(rhs)),
-            let (.text(lhs), .text(rhs)):
-            return lhs == rhs
-        case let (
-            .element(lhsTag, lhsParameters, lhsChildren),
-            .element(rhsTag, rhsParameters, rhsChildren)):
-            return lhsTag == rhsTag
-                && lhsParameters == rhsParameters
-                && lhsChildren == rhsChildren
-        default:
-            return false
-        }
+let textParser = ParsePrint {
+    Whitespace(.horizontal)
+    Prefix(1...) {
+        $0 != .init(ascii: "<") && $0 != .init(ascii: "\n")
     }
-}
+}.map(.string).map(Conversions.XMLText())
 
-// MARK: - Parser
+let xmlDoctypeParser = ParsePrint {
+    "<?xml".utf8
+    Whitespace(1..., .horizontal)
+    attributesParser
+    Whitespace(.horizontal)
+    "?>".utf8
+}.map(Conversions.XMLDoctype())
 
-public typealias Input = Substring.UTF8View
-
-public let tag = "<".utf8
-    .take(Prefix { $0 != .init(ascii: ">") })
-    .skip(">".utf8)
-
-public let stringLiteral = Skip("\"".utf8)
-    .take(Prefix { $0 != .init(ascii: "\"") })
-    .skip("\"".utf8)
-    .map { String(decoding: $0, as: UTF8.self) }
-
-public let parameter = Prefix<Input> { $0 != .init(ascii: "=") }.map { String(decoding: $0, as: UTF8.self) }
-    .skip("=".utf8)
-    .take(stringLiteral)
-    .map { (key: $0, value: $1) }
-
-public let parameters = Many(parameter, atLeast: 1, separator: Whitespace()).map { parameters in
-    parameters.reduce(into: [:]) { $0[$1.0] = $1.1 }
-}
-
-public let doctypeHead = "?xml".utf8
-    .skip(Whitespace<Input>())
-    .take(parameters)
-    .skip("?".utf8)
-    .map { parameters in
-        XML.doctype(parameters)
+let xmlParser = ParsePrint {
+    Optionally {
+        xmlDoctypeParser
+        Whitespace()
     }
-
-public let doctype = tag.pipe(doctypeHead)
-
-public let comment = "<!--".utf8
-    .take(PrefixUpTo("-->".utf8).skip("-->".utf8))
-    .map { XML.comment(String(decoding: $0, as: UTF8.self)) }
-    .skip(Optional.parser(of: Newline().skip(Whitespace())))
-
-public let closingSlash = Optional.parser(of: "/".utf8).map { $0 != nil ? true : false }
-
-// covers the following tag layouts
-// <tag1 param1="value1">
-// <tag2 param2="value2"/>
-// <tag3 param3="value3" />
-public let tagHeadWithParameters = Prefix<Input> { $0 != .init(ascii: " ") }.map { String(decoding: $0, as: UTF8.self) }
-    .skip(Whitespace())
-    .take(parameters)
-    .skip(Whitespace())
-    .take(closingSlash)
-    .skip(End())
-    .eraseToAnyParser()
-
-// covers the following tag layouts
-// <tag1>
-// <tag2/>
-// <tag3 />
-public let tagHeadNoParameters = Prefix<Input> { $0 != .init(ascii: " ") && $0 != .init(ascii: "/") }.skip(Whitespace()).take(closingSlash)
-
-public let tagHead = tagHeadWithParameters.orElse(tagHeadNoParameters.map { tagName, hasClosingSlash in (String(decoding: tagName, as: UTF8.self), [:], hasClosingSlash) })
-
-public let fullTag = tag.pipe(tagHead)
-
-public let singleXMLTag = fullTag
-    .flatMap { tagName, parameters, single in
-        single == true
-        ? Conditional.first(Always(XML.element(tagName, parameters, [])))
-        : Conditional.second(Fail())
-    }.skip(Optional.parser(of: Newline().skip(Whitespace())))
-
-public let containerXMLTagBody: (String) -> AnyParser<Input, Input> = { tagName in
-    let tag = "</\(tagName)>".utf8
-    return PrefixUpTo(tag)
-        .skip(tag)
-        .skip(Optional.parser(of: Newline().skip(Whitespace())))
-        .eraseToAnyParser()
-}
-
-public let containerXMLTag = fullTag
-    .flatMap { tagName, parameters, single in
-        single == false
-        ? Conditional.first(
-            containerXMLTagBody(tagName)
-                .pipe(Lazy { xmlBody }.skip(End()))
-                .map { xml in
-                    return XML.element(tagName, parameters, xml)
+    containerTagParser
+    End()
+}.map(
+    .convert(
+        apply: { doctype, root in
+            if let doctype {
+                return [doctype, root]
+            } else {
+                return [root]
+            }
+        },
+        unapply: { xml in
+            guard xml.count > 0, xml.count <= 2 else  {
+                return nil
+            }
+            
+            let doctype: XML? = xml.count == 2 ? xml[0] : nil
+            let root: XML = xml[xml.count-1]
+            
+            if let doctype {
+                switch doctype {
+                case .doctype:
+                    break
+                default:
+                    return nil
                 }
-        )
-        : Conditional.second(Fail())
-    }
-
-public var text: AnyParser<Input, XML> {
-    Optional.parser(of: End()).flatMap {
-        $0 != nil
-        ? Conditional.first(Fail())
-        : Conditional.second(
-            Prefix<Input> { $0 != .init(ascii: "<") && $0 != .init(ascii: "\n") }
-                .map { .text(String(decoding: $0, as: UTF8.self)) }
-        )
-    }.skip(Optional.parser(of: Newline().skip(WhitespaceNoNewline())))
-    .eraseToAnyParser()
-}
-
-public var xmlBody: AnyParser<Input, [XML]> {
-    Skip(Whitespace())
-    .take(
-        Many(
-            singleXMLTag
-                .orElse(containerXMLTag)
-                .orElse(comment)
-                .orElse(text)
-        )
+            }
+            
+            switch root {
+            case .element:
+                break
+            default:
+                return nil
+            }
+            
+            return (doctype, root)
+        }
     )
-    .skip(Whitespace())
-    .skip(End())
-    .eraseToAnyParser()
+)
+
+let indentedContentParser: (Int) -> AnyParserPrinter<Substring.UTF8View, XML> = { indentation in
+    OneOf {
+        indentedContainerTagParser(indentation)
+        ParsePrint {
+            Whitespace(.horizontal).printing(String(repeating: " ", count: indentation).utf8)
+            emptyTagParser
+            Whitespace(.horizontal)
+        }
+        commentParser
+        textParser
+    }.eraseToAnyParserPrinter()
 }
 
-public var xml: AnyParser<Substring.UTF8View, [XML]> {
-    doctype
-        .skip(Newline())
-        .take(xmlBody).map {
-            Array([[$0], $1].joined())
-        }.eraseToAnyParser()
+let indentedContainerTagParser = { (indentation: Int) in
+    ParsePrint {
+        Whitespace(.horizontal).printing(String(repeating: " ", count: indentation).utf8)
+        openingTagParser
+        Whitespace(.vertical).printing("\n".utf8)
+        Many {
+            Lazy {
+                indentedContentParser(indentation + 4)
+                Whitespace(.vertical).printing("\n".utf8)
+            }
+        } terminator: {
+            Whitespace(.horizontal).printing(String(repeating: " ", count: indentation).utf8)
+            "</".utf8
+        }
+        Prefix { $0 != .init(ascii: ">") }.map(.string)
+        ">".utf8
+    }
+    .filter { tagHead, _, closingTag in tagHead.0 == closingTag }
+    .map(Conversions.XMLElement())
 }
+
+let indentedXMLParser = ParsePrint {
+    Optionally {
+        xmlDoctypeParser
+        Whitespace(.vertical).printing("\n".utf8)
+    }
+    indentedContainerTagParser(0)
+    End()
+}.map(Conversions.XMLRoot())
