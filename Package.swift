@@ -12,7 +12,7 @@ let package = Package(
             targets: ["XMLParser"]),
     ],
     dependencies: [
-        .package(path: "~/code/swift/swift-parsing"),
+        .package(url: "https://github.com/JaapWijnen/swift-parsing", .branch("pipe-end-printer")),
         //.package(url: "https://github.com/pointfreeco/swift-parsing.git", from: "0.9.2"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.0.2"),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump.git", from: "0.4.0"),
