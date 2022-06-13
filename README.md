@@ -12,7 +12,7 @@ var input = """
 </root>
 """
 
-// xml parser takes a single parameter which determines the printing mode (with or without newlines/indentation)
+// xml parser takes a single `Bool` parameter which determines the printing mode (with or without newlines/indentation)
 let xml = try xmlParser(true).parse(input)
 //[
 //  .doctype([
