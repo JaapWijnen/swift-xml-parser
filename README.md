@@ -12,7 +12,8 @@ var input = """
 </root>
 """
 
-let xml = try xmlParser.parse(input)
+// xml parser takes a single parameter which determines the printing mode (with or without newlines/indentation)
+let xml = try xmlParser(true).parse(input)
 //[
 //  .doctype([
 //    "version": "1.0", 
