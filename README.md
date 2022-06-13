@@ -23,6 +23,15 @@ let xml = try xmlParser(true).parse(input)
 //    .element("content", ["attribute1": "value"], [])
 //  ])
 //]
+
+let indentedPrintedXML = xmlParser(true).print(xml)
+//<?xml version=\"1.0\" encoding=\"utf-8\"?>
+//<root>
+//  <content attribute1="value"/>
+//</root>
+
+let flatPrintedXML = xmlParser(false).print(xml)
+//<?xml version=\"1.0\" encoding=\"utf-8\"?><root><content attribute1="value"/></root>
 ```
 
 ## License
