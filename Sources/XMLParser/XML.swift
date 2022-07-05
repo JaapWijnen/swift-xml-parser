@@ -1,10 +1,15 @@
 import Collections
 
 public struct XML {
+    public typealias Prolog = OrderedDictionary<String, String>
+    
     var prolog: Prolog
     var root: Element
     
-    public typealias Prolog = OrderedDictionary<String, String>
+    public init(prolog: Prolog, root: Element) {
+        self.prolog = prolog
+        self.root = root
+    }
     
     public struct Element {
         let name: String
