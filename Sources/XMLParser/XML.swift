@@ -11,7 +11,7 @@ public struct XML {
         let attributes: OrderedDictionary<String, String>
         let content: [Node]
         
-        init(name: String, attributes: OrderedDictionary<String, String> = [:], content: [Node] = []) {
+        public init(name: String, attributes: OrderedDictionary<String, String> = [:], content: [Node] = []) {
             self.name = name
             self.attributes = attributes
             self.content = content
