@@ -213,10 +213,13 @@ final class XMLExampleTests: XCTestCase {
                 <Member Name="system" Value="2"/>
                 <Member Name="unknownFutureValue" Value="3"/>
             </EnumType>
+            <value>
+                4
+            </value>
         </Schema>
         """
     let flatXML = """
-        <?xml version="1.0" encoding="utf-8"?><Schema Namespace="microsoft.graph" Alias="graph" xmlns="http://docs.oasis-open.org/odata/ns/edm"><EnumType Name="appliedConditionalAccessPolicyResult"><Member Name="success" Value="0"/><Member Name="failure" Value="1"/><Member Name="notApplied" Value="2"/><Member Name="notEnabled" Value="3"/><Member Name="unknown" Value="4"/><Member Name="unknownFutureValue" Value="5"/></EnumType><EnumType Name="conditionalAccessStatus"><Member Name="success" Value="0"/><Member Name="failure" Value="1"/><Member Name="notApplied" Value="2"/><Member Name="unknownFutureValue" Value="3"/></EnumType><EnumType Name="groupType"><Member Name="unifiedGroups" Value="0"/><Member Name="azureAD" Value="1"/><Member Name="unknownFutureValue" Value="2"/></EnumType><EnumType Name="initiatorType"><Member Name="user" Value="0"/><Member Name="application" Value="1"/><Member Name="system" Value="2"/><Member Name="unknownFutureValue" Value="3"/></EnumType></Schema>
+        <?xml version="1.0" encoding="utf-8"?><Schema Namespace="microsoft.graph" Alias="graph" xmlns="http://docs.oasis-open.org/odata/ns/edm"><EnumType Name="appliedConditionalAccessPolicyResult"><Member Name="success" Value="0"/><Member Name="failure" Value="1"/><Member Name="notApplied" Value="2"/><Member Name="notEnabled" Value="3"/><Member Name="unknown" Value="4"/><Member Name="unknownFutureValue" Value="5"/></EnumType><EnumType Name="conditionalAccessStatus"><Member Name="success" Value="0"/><Member Name="failure" Value="1"/><Member Name="notApplied" Value="2"/><Member Name="unknownFutureValue" Value="3"/></EnumType><EnumType Name="groupType"><Member Name="unifiedGroups" Value="0"/><Member Name="azureAD" Value="1"/><Member Name="unknownFutureValue" Value="2"/></EnumType><EnumType Name="initiatorType"><Member Name="user" Value="0"/><Member Name="application" Value="1"/><Member Name="system" Value="2"/><Member Name="unknownFutureValue" Value="3"/></EnumType><value>4</value></Schema>
         """
     
     let structuredXML = [
@@ -268,6 +271,11 @@ final class XMLExampleTests: XCTestCase {
                         .element("Member", ["Name": "system", "Value": "2"], []),
                         .element("Member", ["Name": "unknownFutureValue", "Value": "3"], [])
                     ]
+                ),
+                .element(
+                    "value",
+                    [:],
+                    [.text("4")]
                 ),
             ]
         )

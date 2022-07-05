@@ -103,11 +103,13 @@ let contentParser: (Int?) -> AnyParserPrinter<Substring.UTF8View, XML> = { inden
         containerTagParser(indentation)
         ParsePrint {
             Whitespace(.horizontal).printing(String(repeating: " ", count: indentation ?? 0).utf8)
-            emptyTagParser
-            Whitespace(.horizontal)
+            OneOf {
+                emptyTagParser
+                commentParser
+                textParser
+            }
         }
-        commentParser
-        textParser
+            
     }.eraseToAnyParserPrinter()
 }
 
