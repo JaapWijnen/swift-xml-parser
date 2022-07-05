@@ -1,6 +1,6 @@
 # swift-xml-parser
 
-A reversible XML parser using the excellent [swift-parsing][swift-parsing] package by [pointfree.co][pointfree]
+A reversible XML parser powered by the excellent [swift-parsing][swift-parsing] package by [pointfree.co][pointfree]
 
 ## Getting Started
 
@@ -12,7 +12,7 @@ var input = """
 </root>
 """
 
-// xml parser takes a single `Bool` parameter which determines the printing mode (with or without newlines/indentation)
+// `xmlParser` takes a single `Bool` parameter which determines the printing mode (with or without newlines/indentation)
 let xml = try xmlParser(true).parse(input)
 //XML(
 //  prolog: [
