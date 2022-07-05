@@ -1,21 +1,46 @@
 import Collections
 
-public enum XML {
-    public typealias Parameters = OrderedDictionary<String, String>
+public struct XML {
+    var prolog: Prolog
+    var root: Element
     
-    case doctype(Parameters)
-    indirect case element(String, Parameters, [XML])
-    case text(String)
-    case comment(String)
+    public typealias Prolog = OrderedDictionary<String, String>
+    
+    public struct Element {
+        let name: String
+        let attributes: OrderedDictionary<String, String>
+        let content: [Node]
+    }
+    
+    public enum Node {
+        case element(Element)
+        //indirect case element(String, Attributes, [Node])
+        case text(String)
+        case comment(String)
+    }
 }
 
 extension XML: CustomStringConvertible {
     public var description: String {
+        "prolog: \(prolog), root: \(root)"
+    }
+}
+
+extension XML: Equatable { }
+
+extension XML.Element: CustomStringConvertible {
+    public var description: String {
+        "\(self.self)(name: \(name), attributes: \(attributes), content: \(content))"
+    }
+}
+
+extension XML.Element: Equatable { }
+
+extension XML.Node: CustomStringConvertible {
+    public var description: String {
         switch self {
-        case let .doctype(parameters):
-            return ".doctype(\(parameters))"
-        case let .element(type, parameters, content):
-            return ".element(\(type), \(parameters), [\(content)])"
+        case let .element(element):
+            return element.description
         case let .text(string):
             return string
         case let .comment(comment):
@@ -24,22 +49,15 @@ extension XML: CustomStringConvertible {
     }
 }
 
-extension XML: Equatable {
-    public static func == (lhs: XML, rhs: XML) -> Bool {
+extension XML.Node: Equatable {
+    public static func == (lhs: XML.Node, rhs: XML.Node) -> Bool {
         switch (lhs, rhs) {
-        case
-            let (.doctype(lhsAttributes), .doctype(rhsAttributes)):
-            return lhsAttributes == rhsAttributes
+        case let (.element(lhs), .element(rhs)):
+            return lhs == rhs
         case
             let (.comment(lhs), .comment(rhs)),
             let (.text(lhs), .text(rhs)):
             return lhs == rhs
-        case let (
-            .element(lhsTag, lhsParameters, lhsChildren),
-            .element(rhsTag, rhsParameters, rhsChildren)):
-            return lhsTag == rhsTag
-                && lhsParameters == rhsParameters
-                && lhsChildren == rhsChildren
         default:
             return false
         }

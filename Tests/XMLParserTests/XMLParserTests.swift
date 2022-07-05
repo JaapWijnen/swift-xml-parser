@@ -46,13 +46,13 @@ final class XMLParserTests: XCTestCase {
     func testEmptyTag() throws {
         let emptyTag1 = "<xmlTag header1=\"none\"/>"
         let result1 = try emptyTagParser.parse(emptyTag1)
-        XCTAssertNoDifference(result1, .element("xmlTag", ["header1": "none"], []))
+        XCTAssertNoDifference(result1, .element(.init(name: "xmlTag", attributes: ["header1": "none"], content: [])))
         let printResult1 = try emptyTagParser.print(result1)
         XCTAssertNoDifference(String(printResult1), emptyTag1)
         
         let emptyTag2 = "<xmlTag header1=\"none\" />"
         let result2 = try emptyTagParser.parse(emptyTag2)
-        XCTAssertNoDifference(result2, .element("xmlTag", ["header1": "none"], []))
+        XCTAssertNoDifference(result2, .element(.init(name: "xmlTag", attributes: ["header1": "none"], content: [])))
         let printResult2 = try emptyTagParser.print(result2)
         XCTAssertNoDifference(String(printResult2), emptyTag1)
     }
@@ -69,7 +69,7 @@ final class XMLParserTests: XCTestCase {
     func testContainerTag() throws {
         let containerTag = "<xmlTag headerContent=\"none\">tagContent</xmlTag>"
         let result = try containerTagParser(nil).parse(containerTag)
-        XCTAssertNoDifference(result, XML.element("xmlTag", ["headerContent": "none"], [.text("tagContent")]))
+        XCTAssertNoDifference(result, .init(name: "xmlTag", attributes: ["headerContent": "none"], content: [.text("tagContent")]))
         let printResult = try containerTagParser(nil).print(result)
         XCTAssertNoDifference(String(printResult), containerTag)
     }
@@ -93,7 +93,7 @@ final class XMLParserTests: XCTestCase {
     func testXMLContentText() throws {
         let body = "hoi"
         let result = try contentParser(nil).parse(body)
-        XCTAssertNoDifference(result, XML.text("hoi"))
+        XCTAssertNoDifference(result, .text("hoi"))
         let printResult = try contentParser(nil).print(result)
         XCTAssertNoDifference(String(printResult), body)
     }
@@ -101,7 +101,7 @@ final class XMLParserTests: XCTestCase {
     func testXMLContentComment() throws {
         let body = "<!--hoi-->"
         let result = try contentParser(nil).parse(body)
-        XCTAssertNoDifference(result, XML.comment("hoi"))
+        XCTAssertNoDifference(result, .comment("hoi"))
         let printResult = try contentParser(nil).print(result)
         XCTAssertNoDifference(String(printResult), body)
     }
@@ -109,7 +109,7 @@ final class XMLParserTests: XCTestCase {
     func testXMLContentEmptyTag() throws {
         let tag = "<xmlTag header=\"none\"/>"
         let result = try contentParser(nil).parse(tag)
-        XCTAssertNoDifference(result, .element("xmlTag", ["header": "none"], []))
+        XCTAssertNoDifference(result, .element(.init(name: "xmlTag", attributes: ["header": "none"], content: [])))
         let printResult = try contentParser(nil).print(result)
         XCTAssertNoDifference(String(printResult), tag)
     }
@@ -117,31 +117,47 @@ final class XMLParserTests: XCTestCase {
     func testXMLContentContainerTag() throws {
         let containerTag = "<xmlTag headerContent=\"none\">tagContent</xmlTag>"
         let result = try contentParser(nil).parse(containerTag)
-        XCTAssertNoDifference(result, .element("xmlTag", ["headerContent": "none"], [.text("tagContent")]))
+        XCTAssertNoDifference(result, .element(.init(name: "xmlTag", attributes: ["headerContent": "none"], content: [.text("tagContent")])))
         let printResult = try contentParser(nil).print(result)
         XCTAssertNoDifference(String(printResult), containerTag)
     }
 
-    func testDoctype() throws {
-        let doctype = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-        let result = try xmlDoctypeParser.parse(doctype)
-        XCTAssertNoDifference(result, .doctype(["version": "1.0", "encoding": "utf-8"]))
-        let printResult = try xmlDoctypeParser.print(result)
-        XCTAssertNoDifference(String(printResult), doctype)
+    func testProlog() throws {
+        let prolog = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+        let result = try xmlPrologParser.parse(prolog)
+        XCTAssertNoDifference(result, ["version": "1.0", "encoding": "utf-8"])
+        let printResult = try xmlPrologParser.print(result)
+        XCTAssertNoDifference(String(printResult), prolog)
     }
 
-    func testXMLDoctype() throws {
-        let doctype = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root></root>"
-        let result = try xmlParser(false).parse(doctype)
-        XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [])])
+    func testXMLProlog() throws {
+        let prolog = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root></root>"
+        let result = try xmlParser(false).parse(prolog)
+        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", attributes: [:], content: [])))
         let printResult = try xmlParser(false).print(result)
-        XCTAssertNoDifference(String(printResult), doctype)
+        XCTAssertNoDifference(String(printResult), prolog)
     }
 
     func testXMLEmptyTag() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root><empty/></root>"
         let result = try xmlParser(false).parse(xml)
-        XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [.element("empty", [:], [])])])
+        XCTAssertNoDifference(
+            result,
+            XML(
+                prolog: ["version": "1.0", "encoding": "utf-8"],
+                root: .init(
+                    name: "root",
+                    attributes: [:],
+                    content: [
+                        .element(.init(
+                            name: "empty",
+                            attributes: [:],
+                            content: []
+                        ))
+                    ]
+                )
+            )
+        )
         let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
@@ -149,7 +165,23 @@ final class XMLParserTests: XCTestCase {
     func testXMLContainerTag() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root><nonEmpty>a</nonEmpty></root>"
         let result = try xmlParser(false).parse(xml)
-        XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [.element("nonEmpty", [:], [.text("a")])])])
+        XCTAssertNoDifference(
+            result,
+            XML(
+                prolog: ["version": "1.0", "encoding": "utf-8"],
+                root: .init(
+                    name: "root",
+                    attributes: [:],
+                    content: [
+                        .element(.init(
+                            name: "nonEmpty",
+                            attributes: [:],
+                            content: [.text("a")]
+                        ))
+                    ]
+                )
+            )
+        )
         let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
@@ -157,7 +189,7 @@ final class XMLParserTests: XCTestCase {
     func testXMLText() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root>text</root>"
         let result = try xmlParser(false).parse(xml)
-        XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [.text("text")])])
+        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", attributes: [:], content: [.text("text")])))
         let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
@@ -165,7 +197,7 @@ final class XMLParserTests: XCTestCase {
     func testXMLComment() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root><!--comment--></root>"
         let result = try xmlParser(false).parse(xml)
-        XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [.comment("comment")])])
+        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", attributes: [:], content: [.comment("comment")])))
         let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
@@ -180,7 +212,7 @@ final class XMLParserTests: XCTestCase {
         </root>
         """
         let result = try xmlParser(false).parse(xml)
-        XCTAssertNoDifference(result, [.doctype(["version": "1.0", "encoding": "utf-8"]), .element("root", [:], [.element("nonEmpty", [:], [.text("text")])])])
+        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", attributes: [:], content: [.element(.init(name: "nonEmpty", attributes: [:], content: [.text("text")]))])))
     }
 }
 
@@ -222,64 +254,65 @@ final class XMLExampleTests: XCTestCase {
         <?xml version="1.0" encoding="utf-8"?><Schema Namespace="microsoft.graph" Alias="graph" xmlns="http://docs.oasis-open.org/odata/ns/edm"><EnumType Name="appliedConditionalAccessPolicyResult"><Member Name="success" Value="0"/><Member Name="failure" Value="1"/><Member Name="notApplied" Value="2"/><Member Name="notEnabled" Value="3"/><Member Name="unknown" Value="4"/><Member Name="unknownFutureValue" Value="5"/></EnumType><EnumType Name="conditionalAccessStatus"><Member Name="success" Value="0"/><Member Name="failure" Value="1"/><Member Name="notApplied" Value="2"/><Member Name="unknownFutureValue" Value="3"/></EnumType><EnumType Name="groupType"><Member Name="unifiedGroups" Value="0"/><Member Name="azureAD" Value="1"/><Member Name="unknownFutureValue" Value="2"/></EnumType><EnumType Name="initiatorType"><Member Name="user" Value="0"/><Member Name="application" Value="1"/><Member Name="system" Value="2"/><Member Name="unknownFutureValue" Value="3"/></EnumType><value>4</value></Schema>
         """
     
-    let structuredXML = [
-        XML.doctype(["version": "1.0", "encoding": "utf-8"]),
-        XML.element(
-            "Schema",
-            [
+    let structuredXML: XML = XML(
+        prolog: ["version": "1.0", "encoding": "utf-8"],
+        root: .init(
+            name: "Schema",
+            attributes: [
                 "Namespace": "microsoft.graph",
                 "Alias": "graph",
                 "xmlns": "http://docs.oasis-open.org/odata/ns/edm"
-            ], [
-                .element(
-                    "EnumType",
-                    ["Name": "appliedConditionalAccessPolicyResult"],
-                    [
-                        .element("Member", ["Name": "success", "Value": "0"], []),
-                        .element("Member", ["Name": "failure", "Value": "1"], []),
-                        .element("Member", ["Name": "notApplied", "Value": "2"], []),
-                        .element("Member", ["Name": "notEnabled", "Value": "3"], []),
-                        .element("Member", ["Name": "unknown", "Value": "4"], []),
-                        .element("Member", ["Name": "unknownFutureValue", "Value": "5"], [])
+            ],
+            content: [
+                .element(.init(
+                    name: "EnumType",
+                    attributes: ["Name": "appliedConditionalAccessPolicyResult"],
+                    content: [
+                        .element(.init(name: "Member", attributes: ["Name": "success", "Value": "0"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "failure", "Value": "1"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "notApplied", "Value": "2"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "notEnabled", "Value": "3"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "unknown", "Value": "4"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "5"], content: [])),
                     ]
-                ),
-                .element(
-                    "EnumType",
-                    ["Name": "conditionalAccessStatus"],
-                    [
-                        .element("Member", ["Name": "success", "Value": "0"], []),
-                        .element("Member", ["Name": "failure", "Value": "1"], []),
-                        .element("Member", ["Name": "notApplied", "Value": "2"], []),
-                        .element("Member", ["Name": "unknownFutureValue", "Value": "3"], [])
+                )),
+                .element(.init(
+                    name: "EnumType",
+                    attributes: ["Name": "conditionalAccessStatus"],
+                    content: [
+                        .element(.init(name: "Member", attributes: ["Name": "success", "Value": "0"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "failure", "Value": "1"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "notApplied", "Value": "2"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "3"], content: [])),
                     ]
-                ),
-                .element(
-                    "EnumType",
-                    ["Name": "groupType"],
-                    [
-                        .element("Member", ["Name": "unifiedGroups", "Value": "0"], []),
-                        .element("Member", ["Name": "azureAD", "Value": "1"], []),
-                        .element("Member", ["Name": "unknownFutureValue", "Value": "2"], [])
+                )),
+                .element(.init(
+                    name: "EnumType",
+                    attributes: ["Name": "groupType"],
+                    content: [
+                        .element(.init(name: "Member", attributes: ["Name": "unifiedGroups", "Value": "0"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "azureAD", "Value": "1"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "2"], content: []))
                     ]
-                ),
-                .element(
-                    "EnumType",
-                    ["Name": "initiatorType"],
-                    [
-                        .element("Member", ["Name": "user", "Value": "0"], []),
-                        .element("Member", ["Name": "application", "Value": "1"], []),
-                        .element("Member", ["Name": "system", "Value": "2"], []),
-                        .element("Member", ["Name": "unknownFutureValue", "Value": "3"], [])
+                )),
+                .element(.init(
+                    name: "EnumType",
+                    attributes: ["Name": "initiatorType"],
+                    content: [
+                        .element(.init(name: "Member", attributes: ["Name": "user", "Value": "0"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "application", "Value": "1"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "system", "Value": "2"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "3"], content: [])),
                     ]
-                ),
-                .element(
-                    "value",
-                    [:],
-                    [.text("4")]
-                ),
+                )),
+                .element(.init(
+                    name: "value",
+                    attributes: [:],
+                    content: [.text("4")]
+                )),
             ]
         )
-    ]
+    )
     
     func testExample() throws {
         let result = try xmlParser(false).parse(indentedXML)

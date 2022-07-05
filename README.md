@@ -14,12 +14,12 @@ var input = """
 
 // xml parser takes a single `Bool` parameter which determines the printing mode (with or without newlines/indentation)
 let xml = try xmlParser(true).parse(input)
-//[
-//  .doctype([
+//XML(
+//  prolog: [
 //    "version": "1.0", 
 //    "encoding": "utf-8"
-//  ]), 
-//  .element("root", [:], [
+//  ], 
+//  root: .element("root", [:], [
 //    .element("content", ["attribute1": "value"], [])
 //  ])
 //]

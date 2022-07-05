@@ -43,7 +43,7 @@ let emptyTagParser = ParsePrint {
         "/".utf8
     }
     ">".utf8
-}.map(Conversions.TagHeadToXML())
+}.map(Conversions.XMLEmptyElement()).map(Conversions.XMLNodeElement())
 
 let commentParser = ParsePrint {
     "<!--".utf8
@@ -58,13 +58,13 @@ let textParser = ParsePrint {
     }
 }.map(.string).map(Conversions.XMLText())
 
-let xmlDoctypeParser = ParsePrint {
+let xmlPrologParser = ParsePrint {
     "<?xml".utf8
     Whitespace(1..., .horizontal)
     attributesParser
     Whitespace(.horizontal)
     "?>".utf8
-}.map(Conversions.XMLDoctype())
+}
 
 let openingTagParser = ParsePrint {
     "<".utf8
@@ -98,9 +98,9 @@ let containerTagParser = { (indentation: Int?) in
     .map(Conversions.XMLElement())
 }
 
-let contentParser: (Int?) -> AnyParserPrinter<Substring.UTF8View, XML> = { indentation in
+let contentParser: (Int?) -> AnyParserPrinter<Substring.UTF8View, XML.Node> = { indentation in
     OneOf {
-        containerTagParser(indentation)
+        containerTagParser(indentation).map(Conversions.XMLNodeElement())
         ParsePrint {
             Whitespace(.horizontal).printing(String(repeating: " ", count: indentation ?? 0).utf8)
             OneOf {
@@ -113,12 +113,12 @@ let contentParser: (Int?) -> AnyParserPrinter<Substring.UTF8View, XML> = { inden
     }.eraseToAnyParserPrinter()
 }
 
-public let xmlParser: (Bool) -> AnyParserPrinter<Substring.UTF8View, [XML]> = { (indenting: Bool) in
+public let xmlParser: (Bool) -> AnyParserPrinter<Substring.UTF8View, XML> = { (indenting: Bool) in
     ParsePrint {
         Optionally {
-            xmlDoctypeParser
+            xmlPrologParser
             Whitespace(.vertical).printing(indenting ? "\n".utf8 : "".utf8)
-        }
+        }.map(Conversions.OptionalEmptyDictionary())
         containerTagParser(indenting ? 0 : nil)
         End()
     }.map(Conversions.XMLRoot())
