@@ -1,6 +1,6 @@
 # swift-xml-parser
 
-A XML parser using the excellent [swift-parsing][swift-parsing] package by [pointfree.co][pointfree]
+A reversible XML parser using the excellent [swift-parsing][swift-parsing] package by [pointfree.co][pointfree]
 
 ## Getting Started
 
