@@ -1,4 +1,5 @@
 import Parsing
+import CasePaths
 
 let quotedStringParser = ParsePrint {
     "\"".utf8
@@ -43,11 +44,13 @@ let emptyTagParser = ParsePrint {
         "/".utf8
     }
     ">".utf8
-}.map(Conversions.XMLEmptyElement()).map(Conversions.XMLNodeElement())
+}
+.map(Conversions.XMLEmptyElement())
+.map(/XML.Node.element)
 
 let commentParser = ParsePrint {
     "<!--".utf8
-    PrefixUpTo("-->".utf8).map(.string).map(Conversions.XMLComment())
+    PrefixUpTo("-->".utf8).map(.string).map(/XML.Node.comment)
     "-->".utf8
 }
 
@@ -56,7 +59,9 @@ let textParser = ParsePrint {
     Prefix(1...) {
         $0 != .init(ascii: "<") && $0 != .init(ascii: "\n")
     }
-}.map(.string).map(Conversions.XMLText())
+}
+.map(.string)
+.map(/XML.Node.text)
 
 let xmlPrologParser = ParsePrint {
     "<?xml".utf8
@@ -95,12 +100,13 @@ let containerTagParser = { (indentation: Int?) in
         ">".utf8
     }
     .filter { tagHead, _, closingTag in tagHead.0 == closingTag }
-    .map(Conversions.XMLElement())
+    .map(Conversions.UnpackXMLElementTuple())
+    .map(.memberwise(XML.Element.init))
 }
 
 let contentParser: (Int?) -> AnyParserPrinter<Substring.UTF8View, XML.Node> = { indentation in
     OneOf {
-        containerTagParser(indentation).map(Conversions.XMLNodeElement())
+        containerTagParser(indentation).map(/XML.Node.element)
         ParsePrint {
             Whitespace(.horizontal).printing(String(repeating: " ", count: indentation ?? 0).utf8)
             OneOf {
@@ -121,6 +127,7 @@ public let xmlParser: (Bool) -> AnyParserPrinter<Substring.UTF8View, XML> = { (i
         }.map(Conversions.OptionalEmptyDictionary())
         containerTagParser(indenting ? 0 : nil)
         End()
-    }.map(Conversions.XMLRoot())
+    }
+    .map(.memberwise(XML.init(prolog:root:)))
     .eraseToAnyParserPrinter()
 }

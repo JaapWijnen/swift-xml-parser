@@ -46,13 +46,13 @@ final class XMLParserTests: XCTestCase {
     func testEmptyTag() throws {
         let emptyTag1 = "<xmlTag header1=\"none\"/>"
         let result1 = try emptyTagParser.parse(emptyTag1)
-        XCTAssertNoDifference(result1, .element(.init(name: "xmlTag", attributes: ["header1": "none"], content: [])))
+        XCTAssertNoDifference(result1, .element(.init(name: "xmlTag", attributes: ["header1": "none"])))
         let printResult1 = try emptyTagParser.print(result1)
         XCTAssertNoDifference(String(printResult1), emptyTag1)
         
         let emptyTag2 = "<xmlTag header1=\"none\" />"
         let result2 = try emptyTagParser.parse(emptyTag2)
-        XCTAssertNoDifference(result2, .element(.init(name: "xmlTag", attributes: ["header1": "none"], content: [])))
+        XCTAssertNoDifference(result2, .element(.init(name: "xmlTag", attributes: ["header1": "none"])))
         let printResult2 = try emptyTagParser.print(result2)
         XCTAssertNoDifference(String(printResult2), emptyTag1)
     }
@@ -109,7 +109,7 @@ final class XMLParserTests: XCTestCase {
     func testXMLContentEmptyTag() throws {
         let tag = "<xmlTag header=\"none\"/>"
         let result = try contentParser(nil).parse(tag)
-        XCTAssertNoDifference(result, .element(.init(name: "xmlTag", attributes: ["header": "none"], content: [])))
+        XCTAssertNoDifference(result, .element(.init(name: "xmlTag", attributes: ["header": "none"])))
         let printResult = try contentParser(nil).print(result)
         XCTAssertNoDifference(String(printResult), tag)
     }
@@ -133,7 +133,7 @@ final class XMLParserTests: XCTestCase {
     func testXMLProlog() throws {
         let prolog = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root></root>"
         let result = try xmlParser(false).parse(prolog)
-        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", attributes: [:], content: [])))
+        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root")))
         let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), prolog)
     }
@@ -189,7 +189,7 @@ final class XMLParserTests: XCTestCase {
     func testXMLText() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root>text</root>"
         let result = try xmlParser(false).parse(xml)
-        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", attributes: [:], content: [.text("text")])))
+        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", content: [.text("text")])))
         let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
@@ -197,7 +197,7 @@ final class XMLParserTests: XCTestCase {
     func testXMLComment() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root><!--comment--></root>"
         let result = try xmlParser(false).parse(xml)
-        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", attributes: [:], content: [.comment("comment")])))
+        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", content: [.comment("comment")])))
         let printResult = try xmlParser(false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
@@ -212,7 +212,7 @@ final class XMLParserTests: XCTestCase {
         </root>
         """
         let result = try xmlParser(false).parse(xml)
-        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", attributes: [:], content: [.element(.init(name: "nonEmpty", attributes: [:], content: [.text("text")]))])))
+        XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", content: [.element(.init(name: "nonEmpty", content: [.text("text")]))])))
     }
 }
 
@@ -268,41 +268,41 @@ final class XMLExampleTests: XCTestCase {
                     name: "EnumType",
                     attributes: ["Name": "appliedConditionalAccessPolicyResult"],
                     content: [
-                        .element(.init(name: "Member", attributes: ["Name": "success", "Value": "0"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "failure", "Value": "1"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "notApplied", "Value": "2"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "notEnabled", "Value": "3"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "unknown", "Value": "4"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "5"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "success", "Value": "0"])),
+                        .element(.init(name: "Member", attributes: ["Name": "failure", "Value": "1"])),
+                        .element(.init(name: "Member", attributes: ["Name": "notApplied", "Value": "2"])),
+                        .element(.init(name: "Member", attributes: ["Name": "notEnabled", "Value": "3"])),
+                        .element(.init(name: "Member", attributes: ["Name": "unknown", "Value": "4"])),
+                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "5"])),
                     ]
                 )),
                 .element(.init(
                     name: "EnumType",
                     attributes: ["Name": "conditionalAccessStatus"],
                     content: [
-                        .element(.init(name: "Member", attributes: ["Name": "success", "Value": "0"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "failure", "Value": "1"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "notApplied", "Value": "2"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "3"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "success", "Value": "0"])),
+                        .element(.init(name: "Member", attributes: ["Name": "failure", "Value": "1"])),
+                        .element(.init(name: "Member", attributes: ["Name": "notApplied", "Value": "2"])),
+                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "3"])),
                     ]
                 )),
                 .element(.init(
                     name: "EnumType",
                     attributes: ["Name": "groupType"],
                     content: [
-                        .element(.init(name: "Member", attributes: ["Name": "unifiedGroups", "Value": "0"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "azureAD", "Value": "1"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "2"], content: []))
+                        .element(.init(name: "Member", attributes: ["Name": "unifiedGroups", "Value": "0"])),
+                        .element(.init(name: "Member", attributes: ["Name": "azureAD", "Value": "1"])),
+                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "2"]))
                     ]
                 )),
                 .element(.init(
                     name: "EnumType",
                     attributes: ["Name": "initiatorType"],
                     content: [
-                        .element(.init(name: "Member", attributes: ["Name": "user", "Value": "0"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "application", "Value": "1"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "system", "Value": "2"], content: [])),
-                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "3"], content: [])),
+                        .element(.init(name: "Member", attributes: ["Name": "user", "Value": "0"])),
+                        .element(.init(name: "Member", attributes: ["Name": "application", "Value": "1"])),
+                        .element(.init(name: "Member", attributes: ["Name": "system", "Value": "2"])),
+                        .element(.init(name: "Member", attributes: ["Name": "unknownFutureValue", "Value": "3"])),
                     ]
                 )),
                 .element(.init(

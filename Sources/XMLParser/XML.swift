@@ -10,6 +10,12 @@ public struct XML {
         let name: String
         let attributes: OrderedDictionary<String, String>
         let content: [Node]
+        
+        init(name: String, attributes: OrderedDictionary<String, String> = [:], content: [Node] = []) {
+            self.name = name
+            self.attributes = attributes
+            self.content = content
+        }
     }
     
     public enum Node {
@@ -30,7 +36,7 @@ extension XML: Equatable { }
 
 extension XML.Element: CustomStringConvertible {
     public var description: String {
-        "\(self.self)(name: \(name), attributes: \(attributes), content: \(content))"
+        "\(Self.self)(name: \(name), attributes: \(attributes), content: \(content))"
     }
 }
 

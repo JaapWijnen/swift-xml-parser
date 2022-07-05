@@ -54,112 +54,18 @@ extension Conversions {
         }
     }
     
-    struct XMLNodeElement: Conversion {
+    struct UnpackXMLElementTuple: Conversion {
         @inlinable
         init() { }
         
         @inlinable
-        func apply(_ input: XML.Element) throws -> XML.Node {
-            .element(input)
+        func apply(_ input: ((String, OrderedDictionary<String, String>), [XML.Node], String)) -> (String, OrderedDictionary<String, String>, [XML.Node]) {
+            (input.0.0, input.0.1, input.1)
         }
         
         @inlinable
-        func unapply(_ output: XML.Node) throws -> XML.Element {
-            switch output {
-            case let .element(element):
-                return element
-            default:
-                throw XMLConversionError()
-            }
-        }
-    }
-//    struct TagHeadToXML: Conversion {
-//        @inlinable
-//        init() { }
-//
-//        @inlinable
-//        func apply(_ input: (String, OrderedDictionary<String, String>)) -> XML.Node {
-//            XML.Node.element(input.0, input.1, [])
-//        }
-//
-//        @inlinable
-//        func unapply(_ output: XML.Node) throws -> (String, OrderedDictionary<String, String>) {
-//            switch output {
-//            case let .element(tagName, attributes, []):
-//                return (tagName, attributes)
-//            default:
-//                throw XMLConversionError()
-//            }
-//        }
-//    }
-    
-    struct XMLElement: Conversion {
-        @inlinable
-        init() { }
-        
-        @inlinable
-        func apply(_ input: ((String, OrderedDictionary<String, String>), [XML.Node], String)) -> XML.Element {
-            XML.Element(name: input.0.0, attributes: input.0.1, content: input.1)
-        }
-        
-        @inlinable
-        func unapply(_ output: XML.Element) -> ((String, OrderedDictionary<String, String>), [XML.Node], String) {
-            ((output.name, output.attributes), output.content, output.name)
-        }
-    }
-    
-    struct XMLComment: Conversion {
-        @inlinable
-        init() { }
-        
-        @inlinable
-        func apply(_ input: String) throws -> XML.Node {
-            .comment(input)
-        }
-        
-        @inlinable
-        func unapply(_ output: XML.Node) throws -> String {
-            switch output {
-            case let .comment(comment):
-                return comment
-            default:
-                throw XMLConversionError()
-            }
-        }
-    }
-    
-    struct XMLText: Conversion {
-        @inlinable
-        init() { }
-        
-        @inlinable
-        func apply(_ input: String) throws -> XML.Node {
-            .text(input)
-        }
-        
-        @inlinable
-        func unapply(_ output: XML.Node) throws -> String {
-            switch output {
-            case let .text(comment):
-                return comment
-            default:
-                throw XMLConversionError()
-            }
-        }
-    }
-    
-    struct XMLRoot: Conversion {
-        @inlinable
-        init() { }
-        
-        @inlinable
-        func apply(_ input: (XML.Prolog, XML.Element)) -> XML {
-            XML(prolog: input.0, root: input.1)
-        }
-        
-        @inlinable
-        func unapply(_ output: XML) -> (XML.Prolog, XML.Element) {
-            return (output.prolog, output.root)
+        func unapply(_ output: (String, OrderedDictionary<String, String>, [XML.Node])) -> ((String, OrderedDictionary<String, String>), [XML.Node], String) {
+            ((output.0, output.1), output.2, output.0)
         }
     }
 }
