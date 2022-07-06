@@ -1,5 +1,8 @@
 # swift-xml-parser
 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FJaapWijnen%2Fswift-xml-parser%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/JaapWijnen/swift-xml-parser)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FJaapWijnen%2Fswift-xml-parser%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/JaapWijnen/swift-xml-parser)
+
 A reversible XML parser powered by the excellent [swift-parsing][swift-parsing] package by [pointfree.co][pointfree]
 
 ## Getting Started
