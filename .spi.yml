@@ -1,4 +1,8 @@
 version: 1
 builder:
   configs:
-    - documentation_targets: [XMLParser]
+  - platform: ios
+    scheme: XMLParser
+  - platform: tvos
+    scheme: XMLParser
+  - documentation_targets: [XMLParser]
