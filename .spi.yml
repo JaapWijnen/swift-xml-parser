@@ -3,6 +3,8 @@ builder:
   configs:
   - platform: ios
     scheme: swift-xml-parser
+  - platform: macos-xcodebuild
+    scheme: swift-xml-parser
   - platform: tvos
     scheme: swift-xml-parser
   - platform: watchos
