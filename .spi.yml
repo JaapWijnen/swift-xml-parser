@@ -2,7 +2,7 @@ version: 1
 builder:
   configs:
   - platform: ios
-    scheme: XMLParser
+    scheme: swift-xml-parser
   - platform: tvos
-    scheme: XMLParser
+    scheme: swift-xml-parser
   - documentation_targets: [XMLParser]
