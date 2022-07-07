@@ -44,9 +44,12 @@ let emptyTagParser = ParsePrint {
         "/".utf8
     }
     ">".utf8
+    Always(Array<XML.Node>())
+    Always("")
 }
-.map(Conversions.XMLEmptyElement())
-.map(/XML.Node.element)
+.filter { $0.1.isEmpty }
+.map(Conversions.UnpackXMLElementTuple())
+.map(.memberwise(XML.Element.init))
 
 let commentParser = ParsePrint {
     "<!--".utf8
@@ -60,8 +63,7 @@ let textParser = ParsePrint {
         $0 != .init(ascii: "<") && $0 != .init(ascii: "\n")
     }
 }
-.map(.string)
-.map(/XML.Node.text)
+.map(.string).map(/XML.Node.text)
 
 let xmlPrologParser = ParsePrint {
     "<?xml".utf8
@@ -84,7 +86,6 @@ let openingTagParser = ParsePrint {
 
 let containerTagParser = { (indentation: Int?) in
     ParsePrint {
-        Whitespace(.horizontal).printing(String(repeating: " ", count: indentation ?? 0).utf8)
         openingTagParser
         Whitespace(.vertical).printing(indentation != nil ? "\n".utf8 : "".utf8)
         Many {
@@ -105,29 +106,57 @@ let containerTagParser = { (indentation: Int?) in
 }
 
 let contentParser: (Int?) -> AnyParserPrinter<Substring.UTF8View, XML.Node> = { indentation in
-    OneOf {
-        containerTagParser(indentation).map(/XML.Node.element)
-        ParsePrint {
-            Whitespace(.horizontal).printing(String(repeating: " ", count: indentation ?? 0).utf8)
-            OneOf {
-                emptyTagParser
-                commentParser
-                textParser
-            }
+    ParsePrint {
+        Whitespace(.horizontal).printing(String(repeating: " ", count: indentation ?? 0).utf8)
+        OneOf {
+            containerTagParser(indentation).map(/XML.Node.element)
+            emptyTagParser.map(/XML.Node.element)
+            commentParser
+            textParser
         }
-            
     }.eraseToAnyParserPrinter()
 }
 
-public let xmlParser: (Bool) -> AnyParserPrinter<Substring.UTF8View, XML> = { (indenting: Bool) in
-    ParsePrint {
-        Optionally {
-            xmlPrologParser
-            Whitespace(.vertical).printing(indenting ? "\n".utf8 : "".utf8)
-        }.map(Conversions.OptionalEmptyDictionary())
-        containerTagParser(indenting ? 0 : nil)
-        End()
+/// A reversible parser that takes in a string of XML and parses it into a structured ``XML`` type, or prints structured ``XML`` into an XML string.
+///
+/// You can create an ``XMLParser/XMLParser`` using ``init(indenting:)``
+///
+/// ```swift
+/// let xmlParser = XMLParser(indenting: true)
+/// let xmlString = "<root><value/></root>"
+/// let xml: XML = try xmlParser.parse(xmlString)
+/// ```
+public struct XMLParser: ParserPrinter {
+    let parser: AnyParserPrinter<Substring.UTF8View, XML>
+    /// Creates an XMLParser with indented or `minified` printing.
+    /// - Parameters:
+    ///   - indenting: wether to print using indentation and newlines or not.
+    public init(indenting: Bool = true) {
+        self.parser = ParsePrint {
+            Optionally {
+                xmlPrologParser
+                Whitespace(.vertical).printing(indenting ? "\n".utf8 : "".utf8)
+            }.map(Conversions.OptionalEmptyDictionary())
+            containerTagParser(indenting ? 0 : nil)
+            End()
+        }
+        .map(.memberwise(XML.init(prolog:root:)))
+        .eraseToAnyParserPrinter()
     }
-    .map(.memberwise(XML.init(prolog:root:)))
-    .eraseToAnyParserPrinter()
+    
+    /// Prints an string representation of xml into the provided input.
+    /// - Parameters:
+    ///   - output: the structured XML to turn into a string
+    ///   - input: the input to write the string representation to
+    public func print(_ output: XML, into input: inout Substring.UTF8View) throws {
+        try parser.print(output, into: &input)
+    }
+    
+    /// Parses an xml string into a structured ``XML`` type
+    /// - Parameters:
+    ///   - input: the input string to parse
+    /// - Returns: A structured ``XML``  type
+    public func parse(_ input: inout Substring.UTF8View) throws -> XML {
+        try parser.parse(&input)
+    }
 }

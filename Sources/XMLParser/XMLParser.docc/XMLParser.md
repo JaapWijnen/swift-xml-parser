@@ -1,13 +1,13 @@
-# swift-xml-parser
+# ``XMLParser``
 
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FJaapWijnen%2Fswift-xml-parser%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/JaapWijnen/swift-xml-parser)
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2FJaapWijnen%2Fswift-xml-parser%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/JaapWijnen/swift-xml-parser)
+A reversible XML parser the parses XML into a structured ``XML`` data type and can print instances of this type into formatted XML string.
 
-A reversible XML parser powered by the excellent [swift-parsing][swift-parsing] package by [pointfree.co][pointfree]
+## Overview
 
-## Getting Started
-
+Basic usage: 
 ```swift
+import XMLParser
+
 var input = """
 <?xml version=\"1.0\" encoding=\"utf-8\"?>
 <root>
@@ -41,9 +41,11 @@ let flatPrintedXML = xmlParser(false).print(xml)
 //<?xml version=\"1.0\" encoding=\"utf-8\"?><root><content attribute1="value"/></root>
 ```
 
-## License
+## Topics
 
-This library is released under the MIT license. See [LICENSE](LICENSE) for details.
+### Types
+- ``XMLParser/XMLParser``
+- ``XML``
+- ``XML/Element``
+- ``XML/Node``
 
-[swift-parsing]: https://github.com/pointfreeco/swift-parsing
-[pointfree]: https://pointfree.co

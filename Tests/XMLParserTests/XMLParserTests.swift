@@ -46,13 +46,13 @@ final class XMLParserTests: XCTestCase {
     func testEmptyTag() throws {
         let emptyTag1 = "<xmlTag header1=\"none\"/>"
         let result1 = try emptyTagParser.parse(emptyTag1)
-        XCTAssertNoDifference(result1, .element(.init(name: "xmlTag", attributes: ["header1": "none"])))
+        XCTAssertNoDifference(result1, .init(name: "xmlTag", attributes: ["header1": "none"]))
         let printResult1 = try emptyTagParser.print(result1)
         XCTAssertNoDifference(String(printResult1), emptyTag1)
         
         let emptyTag2 = "<xmlTag header1=\"none\" />"
         let result2 = try emptyTagParser.parse(emptyTag2)
-        XCTAssertNoDifference(result2, .element(.init(name: "xmlTag", attributes: ["header1": "none"])))
+        XCTAssertNoDifference(result2, .init(name: "xmlTag", attributes: ["header1": "none"]))
         let printResult2 = try emptyTagParser.print(result2)
         XCTAssertNoDifference(String(printResult2), emptyTag1)
     }
@@ -132,15 +132,15 @@ final class XMLParserTests: XCTestCase {
 
     func testXMLProlog() throws {
         let prolog = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root></root>"
-        let result = try xmlParser(false).parse(prolog)
+        let result = try XMLParser(indenting: false).parse(prolog)
         XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root")))
-        let printResult = try xmlParser(false).print(result)
+        let printResult = try XMLParser(indenting: false).print(result)
         XCTAssertNoDifference(String(printResult), prolog)
     }
-
+    
     func testXMLEmptyTag() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root><empty/></root>"
-        let result = try xmlParser(false).parse(xml)
+        let result = try XMLParser(indenting: false).parse(xml)
         XCTAssertNoDifference(
             result,
             XML(
@@ -158,13 +158,13 @@ final class XMLParserTests: XCTestCase {
                 )
             )
         )
-        let printResult = try xmlParser(false).print(result)
+        let printResult = try XMLParser(indenting: false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
 
     func testXMLContainerTag() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root><nonEmpty>a</nonEmpty></root>"
-        let result = try xmlParser(false).parse(xml)
+        let result = try XMLParser(indenting: false).parse(xml)
         XCTAssertNoDifference(
             result,
             XML(
@@ -182,23 +182,23 @@ final class XMLParserTests: XCTestCase {
                 )
             )
         )
-        let printResult = try xmlParser(false).print(result)
+        let printResult = try XMLParser(indenting: false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
 
     func testXMLText() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root>text</root>"
-        let result = try xmlParser(false).parse(xml)
+        let result = try XMLParser(indenting: false).parse(xml)
         XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", content: [.text("text")])))
-        let printResult = try xmlParser(false).print(result)
+        let printResult = try XMLParser(indenting: false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
 
     func testXMLComment() throws {
         let xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?><root><!--comment--></root>"
-        let result = try xmlParser(false).parse(xml)
+        let result = try XMLParser(indenting: false).parse(xml)
         XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", content: [.comment("comment")])))
-        let printResult = try xmlParser(false).print(result)
+        let printResult = try XMLParser(indenting: false).print(result)
         XCTAssertNoDifference(String(printResult), xml)
     }
 
@@ -211,7 +211,7 @@ final class XMLParserTests: XCTestCase {
             </nonEmpty>
         </root>
         """
-        let result = try xmlParser(false).parse(xml)
+        let result = try XMLParser(indenting: false).parse(xml)
         XCTAssertNoDifference(result, XML(prolog: ["version": "1.0", "encoding": "utf-8"], root: .init(name: "root", content: [.element(.init(name: "nonEmpty", content: [.text("text")]))])))
     }
 }
@@ -315,32 +315,32 @@ final class XMLExampleTests: XCTestCase {
     )
     
     func testExample() throws {
-        let result = try xmlParser(false).parse(indentedXML)
+        let result = try XMLParser(indenting: false).parse(indentedXML)
         XCTAssertNoDifference(
             result,
             structuredXML
         )
-        let printResult = try xmlParser(false).print(result)
+        let printResult = try XMLParser(indenting: false).print(result)
         XCTAssertNoDifference(String(printResult), flatXML)
     }
     
     func testIndentedExample() throws {
-        let result = try xmlParser(true).parse(indentedXML)
+        let result = try XMLParser().parse(indentedXML)
         XCTAssertNoDifference(
             result,
             structuredXML
         )
-        let printResult = try xmlParser(true).print(result)
+        let printResult = try XMLParser().print(result)
         XCTAssertNoDifference(String(printResult), indentedXML)
     }
     
     func testFlatToIndent() throws {
-        let result = try xmlParser(true).parse(flatXML)
+        let result = try XMLParser().parse(flatXML)
         XCTAssertNoDifference(
             result,
             structuredXML
         )
-        let printResult = try xmlParser(true).print(result)
+        let printResult = try XMLParser().print(result)
         XCTAssertNoDifference(String(printResult), indentedXML)
     }
 }

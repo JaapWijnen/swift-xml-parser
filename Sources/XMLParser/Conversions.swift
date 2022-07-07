@@ -33,27 +33,7 @@ extension Conversions {
             output.map { $0 }
         }
     }
-}
 
-extension Conversions {
-    struct XMLEmptyElement: Conversion {
-        @inlinable
-        init() { }
-        
-        @inlinable
-        func apply(_ input: (String, OrderedDictionary<String, String>)) throws -> XML.Element {
-            XML.Element(name: input.0, attributes: input.1, content: [])
-        }
-        
-        @inlinable
-        func unapply(_ output: XML.Element) throws -> (String, OrderedDictionary<String, String>) {
-            guard output.content.isEmpty else {
-                throw XMLConversionError()
-            }
-            return (output.name, output.attributes)
-        }
-    }
-    
     struct UnpackXMLElementTuple: Conversion {
         @inlinable
         init() { }
