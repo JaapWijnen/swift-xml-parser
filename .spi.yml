@@ -5,4 +5,6 @@ builder:
     scheme: swift-xml-parser
   - platform: tvos
     scheme: swift-xml-parser
+  - platform: watchos
+    scheme: swift-xml-parser
   - documentation_targets: [XMLParser]
