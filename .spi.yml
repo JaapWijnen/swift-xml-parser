@@ -1,4 +1,12 @@
 version: 1
 builder:
   configs:
-    - documentation_targets: [XMLParser]
+  - platform: ios
+    scheme: swift-xml-parser
+  - platform: macos-xcodebuild
+    scheme: swift-xml-parser
+  - platform: tvos
+    scheme: swift-xml-parser
+  - platform: watchos
+    scheme: swift-xml-parser
+  - documentation_targets: [XMLParser]
