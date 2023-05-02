@@ -58,8 +58,7 @@ let commentParser = ParsePrint {
 }
 
 let textParser = ParsePrint {
-    "".utf8 // noop. required to force Whitespace below to take the correct buildExpression
-    Whitespace(.horizontal)
+    Whitespace<PartialRangeFrom<Int>, Conversions.Identity<Substring.UTF8View>>(.horizontal)
     Prefix(1...) {
         $0 != .init(ascii: "<") && $0 != .init(ascii: "\n")
     }
