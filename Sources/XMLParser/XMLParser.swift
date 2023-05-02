@@ -57,8 +57,8 @@ let commentParser = ParsePrint {
     "-->".utf8
 }
 
-let textParser = ParsePrint {
-    Whitespace<PartialRangeFrom<Int>, Conversions.Identity<Substring.UTF8View>>(.horizontal)
+let textParser = ParsePrint(input: Substring.UTF8View.self) {
+    Whitespace(.horizontal)
     Prefix(1...) {
         $0 != .init(ascii: "<") && $0 != .init(ascii: "\n")
     }
