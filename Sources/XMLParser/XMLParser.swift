@@ -20,7 +20,7 @@ let attributesParser = Many {
 }.map(Conversions.TuplesToDictionary())
 
 let tagNameParser = ParsePrint {
-    From<Conversions.UTF8ViewToSubstring, Prefix<Substring>>(.substring) {
+    From<Conversions.UTF8ViewToSubstring, Substring, Prefix<Substring>>(.substring) {
         Prefix { $0.isLetter }
     }.map(.string)
 }
@@ -47,8 +47,8 @@ let emptyTagParser = ParsePrint {
     Always(Array<XML.Node>())
     Always("")
 }
-.filter { $0.1.isEmpty }
-.map(Conversions.UnpackXMLElementTuple())
+.filter { $0.2.isEmpty }
+.map(Conversions.UnpackXMLElement())
 .map(.memberwise(XML.Element.init))
 
 let commentParser = ParsePrint {
@@ -57,7 +57,7 @@ let commentParser = ParsePrint {
     "-->".utf8
 }
 
-let textParser = ParsePrint {
+let textParser = ParsePrint(input: Substring.UTF8View.self) {
     Whitespace(.horizontal)
     Prefix(1...) {
         $0 != .init(ascii: "<") && $0 != .init(ascii: "\n")
@@ -100,8 +100,8 @@ let containerTagParser = { (indentation: Int?) in
         Prefix { $0 != .init(ascii: ">") }.map(.string)
         ">".utf8
     }
-    .filter { tagHead, _, closingTag in tagHead.0 == closingTag }
-    .map(Conversions.UnpackXMLElementTuple())
+    .filter { tagHead, _, _, closingTag in tagHead == closingTag }
+    .map(Conversions.UnpackXMLElement())
     .map(.memberwise(XML.Element.init))
 }
 
