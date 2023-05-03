@@ -17,9 +17,9 @@ let package = Package(
             targets: ["XMLParser"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/pointfreeco/swift-parsing.git", from: "0.10.0"),
+        .package(url: "https://github.com/pointfreeco/swift-parsing.git", from: "0.12.0"),
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.0.2"),
-        .package(url: "https://github.com/pointfreeco/swift-custom-dump.git", from: "0.4.0"),
+        .package(url: "https://github.com/pointfreeco/swift-custom-dump.git", from: "0.10.2"),
     ],
     targets: [
         .target(
